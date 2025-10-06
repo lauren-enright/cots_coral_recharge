@@ -1,0 +1,112 @@
+---
+title: "02_dataexploration"
+author: "L. Enright"
+date: "2025-10-06"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(here)
+library(RColorBrewer)
+```
+
+# read in dataframe made in script 1
+```{r}
+cots_haplo_timeline <- read.csv(here::here("data", "cots_haplo_timeline_10062025.csv"), stringsAsFactors = F)
+```
+
+# T15 
+```{r}
+T15_summarized <- cots_haplo_timeline %>%
+  filter(COTS_T15 == 1) %>%
+  filter(Timepoint == "T15") %>%
+  group_by(Species) %>%
+  summarise(n_corals = n(),
+            sum_alive = sum(Alive),
+            sum_COTSdead = sum(Dead_COTS),
+            sum_COTSpartialdead = sum(PartialDead_COTS),
+            sum_Dead_Other = sum(Dead_Other),
+            sum_PartialDead_Other = sum(PartialDead_Other)
+            ) %>%
+  mutate(proportion_alive = sum_alive/n_corals,
+         proportion_COTSdead = sum_COTSdead/n_corals,
+         proportion_COTSpartialdead = sum_COTSpartialdead/n_corals,
+        proportion_Dead_Other = sum_Dead_Other/n_corals,
+        proportion_PartialDead_Other = sum_PartialDead_Other/n_corals,
+         )
+
+
+T15_summarized_long <- T15_summarized %>%
+  select(-c(sum_alive, sum_COTSdead, sum_COTSpartialdead, sum_Dead_Other, sum_PartialDead_Other)) %>%
+  tidyr::pivot_longer(cols = c(proportion_alive, proportion_COTSdead, proportion_COTSpartialdead, proportion_Dead_Other, proportion_PartialDead_Other),
+                      names_to = "status", values_to = "proportion")
+
+n_labels_T15 <- T15_summarized_long %>%
+  group_by(Species) %>%
+  summarise(n = unique(n_corals), .groups = "drop") 
+
+t15_propbyspecies <- ggplot(T15_summarized_long, aes(x = Species, y = proportion, fill = status)) +
+  geom_col(position = "stack") +
+  geom_text(data = n_labels_T15, 
+            aes(x = Species, y = 1.05, label = paste0("n=", n)),  # y=1.05 puts it above the bar
+            inherit.aes = FALSE, size = 5) +
+  scale_fill_manual(values = c("proportion_alive" = "#01665E", "proportion_COTSdead" = "#8C510A", 
+                               "proportion_Dead_Other" = "darkgrey", "proportion_COTSpartialdead" = 
+                                 "#DFC27D", "proportion_PartialDead_Other" = "lightgrey")) +
+  theme_classic()
+
+t15_propbyspecies
+
+#ggsave("output/t15_propbyspecies_10062025.jpg", plot = t15_propbyspecies, width = 8, height = 6, dpi = 300)
+
+```
+
+# T16
+```{r}
+T16_summarized <- cots_haplo_timeline %>%
+  filter(COTS_T16 == 1) %>%
+  filter(Species != "") %>% 
+  filter(Timepoint == "T16") %>%
+  group_by(Species) %>%
+  summarise(n_corals = n(),
+            sum_alive = sum(Alive),
+            sum_COTSdead = sum(Dead_COTS),
+            sum_COTSpartialdead = sum(PartialDead_COTS),
+            sum_Dead_Other = sum(Dead_Other),
+            sum_PartialDead_Other = sum(PartialDead_Other)
+            ) %>%
+  mutate(proportion_alive = sum_alive/n_corals,
+         proportion_COTSdead = sum_COTSdead/n_corals,
+         proportion_COTSpartialdead = sum_COTSpartialdead/n_corals,
+        proportion_Dead_Other = sum_Dead_Other/n_corals,
+        proportion_PartialDead_Other = sum_PartialDead_Other/n_corals,
+         )
+
+
+T16_summarized_long <- T16_summarized %>%
+  select(-c(sum_alive, sum_COTSdead, sum_COTSpartialdead, sum_Dead_Other, sum_PartialDead_Other)) %>%
+  tidyr::pivot_longer(cols = c(proportion_alive, proportion_COTSdead, proportion_COTSpartialdead, proportion_Dead_Other, proportion_PartialDead_Other),
+                      names_to = "status", values_to = "proportion")
+
+
+n_labels_T16 <- T16_summarized_long %>%
+  group_by(Species) %>%
+  summarise(n = unique(n_corals), .groups = "drop") 
+
+t16_propbyspecies <- ggplot(T16_summarized_long, aes(x = Species, y = proportion, fill = status)) +
+  geom_col(position = "stack")  +
+  geom_text(data = n_labels_T16, 
+            aes(x = Species, y = 1.05, label = paste0("n=", n)),  # y=1.05 puts it above the bar
+            inherit.aes = FALSE, size = 5) +
+  scale_fill_manual(values = c("proportion_alive" = "#01665E", "proportion_COTSdead" = "#8C510A", 
+                               "proportion_Dead_Other" = "darkgrey", "proportion_COTSpartialdead" = 
+                                 "#DFC27D", "proportion_PartialDead_Other" = "lightgrey")) +
+  theme_classic()
+
+t16_propbyspecies
+
+#ggsave("output/t16_propbyspecies_10062025.jpg", plot = t16_propbyspecies, width = 8, height = 6, dpi = 300)
+```

@@ -7,24 +7,98 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(here)
+library(RColorBrewer)
 ```
 
-## R Markdown
+#read in data 
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+```{r}
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+#Scott's data
+haplo <- read.csv(here::here("data", "Species IDs.csv"), stringsAsFactors = F)
+#409 rows 
+unique(haplo$Un_ID)
 
-```{r cars}
-summary(cars)
+#COTS data 
+cots_data <- read.csv(here::here("data", "COTS_RECHARGE_Poc_10032025.csv"), stringsAsFactors = F)
+#1132 rows
+unique(cots_data$Un_ID)
+
+#when COTS got into cages
+recharge_timeline <- read.csv(here::here("data", "recharge_COTS_timeline.csv"), stringsAsFactors = F)
+
 ```
 
-## Including Plots
+#merge data together
+```{r}
+cots_haplo <- merge(haplo, cots_data, by = c("Un_ID", "Herbivory_trt", "Coral_ID", "Plot"), all.x = TRUE)
 
-You can also embed plots, for example:
+#add in COTS timeline
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+cots_haplo_timeline <- merge(cots_haplo, recharge_timeline, by = c("Enrichment_trt", "Block_Plot_Trt"), all.x = TRUE)
+
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+#see if there is missing data on our end 
+```{r}
+#want to see if we are missing any corals that Scott has data for 
+
+cots_haplo_timeline %>% filter(is.na(COTS_T15)) #two corals - ask Scott about this 
+cots_haplo_timeline %>% filter(is.na(COTS_T16)) #two corals - ask Scott about this 
+
+#A4_1X1_P_BG --> did not take data for this coral (probably was not on map?)
+#B2_3X3_P14/15 --> I have this as two separate corals
+
+#each coral should have two rows (one for each time point)
+cots_haplo_timeline %>%
+   group_by(Un_ID) %>%
+  tally() %>%
+  filter(n !=2)
+
+#39 corals that only have one row... 
+
+cots_haplo_timeline %>% filter(is.na(Timepoint))
+
+#39 --- I think these must have died (or maybe destroyed during sampling?) prior to T14 --> spot checked them and not on T14 maps or on datasheets Kelly and I used for T15 sampling. 
+#exception for B2_3X3_P14/15 --> we did take data on these corals, just as two corals not one. 
+
+
+```
+
+
+```{r filter data, looking for missing haplotype or species data}
+
+cots_haplo_timeline %>%
+    # filter(flag_missing_sample==1) %>% 
+  filter(flag_missing_sample == 1)
+
+
+#D3_2X2_P02 = flag_bad_sequence
+#C2_3X3_P14 = flag_missing_sample
+#C4_1X1_P27 = flag_missing_sample
+#D1_open_P09 = flag_missing_sample --> this is flagged as a missing sample, but also Haplotype & Species are provided? Including in data for now... 
+
+   
+cots_haplo_timeline %>%
+   filter(Species == "")
+ 
+ #5 rows, 3 corals:
+ #C2_3X3_P14
+ #C4_1X1_P27
+ #D3_2X2_P02
+ 
+```
+
+#write out this merged dataframe
+```{r}
+write.csv(cots_haplo_timeline, here::here("data", "cots_haplo_timeline_10062025"), row.names = FALSE)
+```
+
+
+
+
+
+
