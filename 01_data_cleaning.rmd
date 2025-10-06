@@ -20,12 +20,12 @@ library(RColorBrewer)
 #Scott's data
 haplo <- read.csv(here::here("data", "Species IDs.csv"), stringsAsFactors = F)
 #409 rows 
-unique(haplo$Un_ID)
+#unique(haplo$Un_ID)
 
 #COTS data 
 cots_data <- read.csv(here::here("data", "COTS_RECHARGE_Poc_10032025.csv"), stringsAsFactors = F)
 #1132 rows
-unique(cots_data$Un_ID)
+#unique(cots_data$Un_ID)
 
 #when COTS got into cages
 recharge_timeline <- read.csv(here::here("data", "recharge_COTS_timeline.csv"), stringsAsFactors = F)
@@ -94,10 +94,8 @@ cots_haplo_timeline %>%
 
 #write out this merged dataframe
 ```{r}
-write.csv(cots_haplo_timeline, here::here("data", "cots_haplo_timeline_10062025"), row.names = FALSE)
+write.csv(cots_haplo_timeline, here::here("data", "cots_haplo_timeline_10062025.csv"), row.names = FALSE)
 ```
-
-
 
 
 
